@@ -1,15 +1,14 @@
 import streamlit as st
 import pandas as pd
-from utils import eda_utils, feature_utils, viz_utils, llm_agent
+from utils import eda_utils, feature_utils, viz_utils
+import streamlit.components.v1 as components
 
-# 🎨 Page Config
 st.set_page_config(page_title="AI-Driven Data Explorer", layout="wide")
 
-# 📁 Upload File
 st.sidebar.header("📂 Upload Your CSV")
 uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type=["csv"])
 
-# 🚦 Tabs
+# Sidebar navigation
 tabs = st.sidebar.radio("🔍 Explore", [
     "Data Preview",
     "Basic EDA",
@@ -18,17 +17,21 @@ tabs = st.sidebar.radio("🔍 Explore", [
     "Pie Chart",
     "Custom Chart",
     "Interactive Graph",
-    "Ask AI"
+    #"🤖 Ask AI"
 ])
 
-# 🧠 Load Dataset
+# Store DataFrame for chart rendering
+preview_data = pd.DataFrame()
+
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    st.sidebar.success(f"Loaded: {uploaded_file.name}")
+    preview_data = df.head(10)  # limit to avoid performance issues
+
+    st.success("CSV loaded successfully!")
 
     if tabs == "Data Preview":
         st.title("📊 Data Preview")
-        st.dataframe(df.head())
+        st.dataframe(preview_data)
 
     elif tabs == "Basic EDA":
         st.title("📌 Basic EDA")
@@ -53,14 +56,92 @@ if uploaded_file:
     elif tabs == "Interactive Graph":
         st.title("📊 Interactive Plotly Chart")
         viz_utils.plot_interactive_chart(df)
-
-    elif tabs == "Ask AI":
-        st.title("🤖 Ask AI About Your Data")
-        query = st.text_area("Type your question here:")
-        if st.button("Generate Insight"):
-            response = llm_agent.ask_question(df, query)
-            st.success(response)
+    
+    # elif tabs == "🤖 Ask AI":
+    #     st.markdown("### 🤖 Ask AI")
+    #     question = st.text_area("Ask a question about your dataset:", key="chat_input")
+    #     if st.button("Generate Insight", key="ask_ai_button"):
+    #         from utils import llm_agent
+    #         with st.spinner("Thinking..."):
+    #             try:
+    #                 response = llm_agent.ask_question(df, question)
+    #                 st.success(response)
+    #             except Exception as e:
+    #                 st.error("Failed to get response from AI.")
+    #                 st.exception(e)
 
 else:
     st.markdown("### 👋 Welcome to the **AI-Driven Data Explorer**")
     st.markdown("Upload a CSV file from the sidebar to get started!")
+
+# Floating AI Chat Button
+if uploaded_file:
+    if "show_chat_popup" not in st.session_state:
+        st.session_state.show_chat_popup = False
+
+    st.markdown("""
+        <style>
+        #chat-toggle-button {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+        }
+        </style>
+        <button id="chat-toggle-button" onclick="toggleChat()">🤖</button>
+        <script>
+            function toggleChat() {
+                const streamlitToggleEvent = new Event("chat_toggle_event");
+                window.dispatchEvent(streamlitToggleEvent);
+            }
+            window.addEventListener("chat_toggle_event", function() {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "chat_toggle_trigger";
+                document.body.appendChild(input);
+                input.click();
+            });
+        </script>
+    """, unsafe_allow_html=True)
+
+    if st.button("🤖 Ask AI", key="hidden_toggle_button", help="Hidden AI Chat Toggle Button"):
+        st.session_state.show_chat_popup = not st.session_state.show_chat_popup
+
+    if st.session_state.show_chat_popup:
+        with st.container():
+            st.markdown("""
+                <div style='
+                    position: fixed;
+                    bottom: 100px;
+                    left: 25px;
+                    background-color: white;
+                    width: 300px;
+                    padding: 15px;
+                    border-radius: 12px;
+                    box-shadow: 0px 6px 20px rgba(0,0,0,0.3);
+                    z-index: 9998;
+                '>
+            """, unsafe_allow_html=True)
+
+            st.markdown("### 🤖 Ask AI")
+            question = st.text_area("Ask a question about your dataset:", key="chat_input")
+            if st.button("Generate Insight", key="ask_ai_button"):
+                from utils import llm_agent
+                with st.spinner("Thinking..."):
+                    try:
+                        response = llm_agent.ask_question(df, question)
+                        st.success(response)
+                    except Exception as e:
+                        st.error("Failed to get response from AI.")
+                        st.exception(e)
+
+            st.markdown("</div>", unsafe_allow_html=True)
