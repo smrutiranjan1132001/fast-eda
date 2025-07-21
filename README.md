@@ -22,23 +22,24 @@ DataVisualisation.png
 
 ## 📂 Folder Structure
 
+```text
 project-root/
 │
 ├── app.py
 ├── utils/
-│ ├── eda_utils.py
-│ ├── feature_utils.py
-│ ├── viz_utils.py
-│ └── llm_agent.py
+│   ├── eda_utils.py
+│   ├── feature_utils.py
+│   ├── viz_utils.py
+│   └── llm_agent.py
 │
 ├── assets/
-│ ├── screenshot_main.png
-│ ├── screenshot_eda.png
-│ ├── screenshot_charts.png
+│   ├── screenshot_main.png
+│   ├── screenshot_eda.png
+│   ├── screenshot_charts.png
 │
 ├── requirements.txt
 └── .env # For storing OPENAI_API_KEY
-
+```
 
 ---
 
